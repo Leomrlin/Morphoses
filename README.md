@@ -1,6 +1,5 @@
 
-# Morphoses:
-# A General Graph Stream Fine-grained Tracking System at Scale
+# Morphoses: A General Graph Stream Fine-grained Tracking System at Scale
 
 
 ## 1. What is it?
