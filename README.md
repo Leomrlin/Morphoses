@@ -4,17 +4,13 @@
 
 ## 1. What is it?
 
-GraphBolt is an efficient streaming graph processing system that provides Bulk Synchronous Parallel (BSP) guarantees. GraphBolt performs dependency-driven incremental processing which quickly reacts to graph changes, and provides low latency & high throughput processing. [[Read more]](https://www.cs.sfu.ca/~keval/contents/papers/graphbolt-eurosys19.pdf)
-
-GraphBolt, now incorporates the DZiG run-time inorder to perform sparsity-aware incremental processing, thereby pushing the boundary of dependency-driven processing of streaming graphs. [[Read more]](https://www.cs.sfu.ca/~keval/contents/papers/dzig-eurosys21.pdf)
-
-For asynchronous algorithms, GraphBolt incorporates KickStarter's light-weight dependency tracking and trimming strategy. [[Read more]](https://www.cs.sfu.ca/~keval/contents/papers/kickstarter-asplos17.pdf)
+GraphBolt is an efficient streaming graph processing system that provides quickly reactions to graph changes, and provides low latency & high throughput processing. [[Read more]](https://www.cs.sfu.ca/~keval/contents/papers/graphbolt-eurosys19.pdf)
 
 ##  2. Getting Started
 
-### 2.1 Core Organization
+### 2.1 Project Organization
 
-The `core/graphBolt/` folder contains the [GraphBolt Engine](#3-graphbolt-engine), the [KickStarter Engine](#4-kickstarter-engine), and our [Stream Ingestor](#5-stream-ingestor) module. The application/benchmark codes (e.g., PageRank, SSSP, etc.) can be found in the `apps/` directory. Useful helper files for generating the stream of changes (`tools/generators/streamGenerator.C`), creating the graph inputs in the correct format (`tools/converters/SNAPtoAdjConverter.C` - from Ligra's codebase), and comparing the output of the algorithms (`tools/output_comparators/`) are also provided.
+The `core/Morphoses/` folder contains the [Morphoses Engine](#3-graphbolt-engine), and a [Stream Ingestor](#4-stream-ingestor) module. The application codes (e.g., PageRank, SSSP, etc.) for Morphoses engine can be found in the `apps/` directory. Useful helper files for generating the stream of changes (`tools/generators/streamGenerator.C`), creating the graph inputs in the correct format (`tools/converters/SNAPtoAdjConverter.C` - from Ligra's codebase) are provided.
 
 ### 2.2 Requirements
 - g++ >= 5.3.0 with support for Cilk Plus.
@@ -22,7 +18,7 @@ The `core/graphBolt/` folder contains the [GraphBolt Engine](#3-graphbolt-engine
     - Use the helper script `install_mimalloc.sh` to install mimalloc.
     - Update the LD_PRELOAD enviroment variable as specified by install_mimalloc.sh script.
 
-**Important: GraphBolt requires mimalloc to function correctly and efficiently.**
+**Important: Morphoses requires mimalloc to function correctly and efficiently.**
 
 
 ### 2.3 Compiling and Running the Application
@@ -33,12 +29,13 @@ $   cd apps
 $   make -j
 ```
  The executable takes the following command-line parameters:
- - `-s` : Optional parameter to indicate a symmetric (undirected) graph is used. 
  - `-streamPath` : Path to the input stream file or pipe (More information on the input format can be found in [Section 2.4](#24-graph-input-and-stream-input-format)).
- - `-numberOfUpdateBatches` : Optional parameter to specify the number of edge updates to be made. Default is 1.
- - `-nEdges` : Number of edge operations to be processed in a given update batch.
+ - `-numberOfUpdateBatches` : Optional parameter to specify the number of transactions to be performed. Default is 1.
+ - `-nEdges` : Number of edge operations to be processed in a given transaction.
+ - `-batchSize` : Number of transactions to package and batch processing for Morphoses engine. Default is 256.
+ - `-nWorkers` : Number of threads used in parallel processing of a transaction batch. Default is 1.
  - `-outputFile` : Optional parameter to print the output of a given algorithms.
- - Input graph file path (More information on the input format can be found in [Section 2.4](#24-graph-input-and-stream-input-format)).
+ - Initial graph file path (More information on the input format can be found in [Section 2.4](#24-graph-input-and-stream-input-format)).
 
 For example,
 ```bash
@@ -50,11 +47,9 @@ $   ./CF -s -numberOfUpdateBatches 2 -nEdges 10000 -streamPath ../inputs/sample_
 $   ./SSSP -source 0 -numberOfUpdateBatches 1 -nEdges 500 -streamPath ../inputs/sample_edge_operations.txt -outputFile /tmp/output/sssp_output ../inputs/sample_graph.adj
 $   ./BFS -source 0 -numberOfUpdateBatches 1 -nEdges 50000 -streamPath ../inputs/sample_edge_operations.txt -outputFile /tmp/output/bfs_output ../inputs/sample_graph.adj
 ```
-Other additional parameters may be required depending on the algorithm. Refer to the `Compute()` function in the application code (`apps/PageRank.C`, `apps/SSSP.C` etc.) for the supported arguments. Additional configurations for the graph ingestor and the graph can be found in [Section 5](#5-stream-ingestor).
+Other additional parameters may be required depending on the algorithm. Refer to the `Compute()` function in the application code (`apps/PageRank.C`, `apps/SSSP.C` etc.) for the supported arguments. Additional configurations for the graph ingestor and the graph can be found in [Section 4](#4-stream-ingestor).
 
 ### 2.4 Graph Input and Stream Input Format
-
-
 
 For weighted graphs, the input graph should be in the weighted adjacency graph format. It is similar to [adjacency graph format](http://www.cs.cmu.edu/~pbbs/benchmarks/graphIO.html) but with the edge weights following the edges.
 
