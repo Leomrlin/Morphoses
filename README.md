@@ -10,7 +10,7 @@ GraphBolt is an efficient streaming graph processing system that provides quickl
 
 ### 2.1 Project Organization
 
-The `core/Morphoses/` folder contains the [Morphoses Engine](#3-graphbolt-engine), and a [Stream Ingestor](#4-stream-ingestor) module. The application codes (e.g., PageRank, SSSP, etc.) for Morphoses engine can be found in the `apps/` directory. Useful helper files for generating the stream of changes (`tools/generators/streamGenerator.C`), creating the graph inputs in the correct format (`tools/converters/SNAPtoAdjConverter.C` - from Ligra's codebase) are provided.
+The `core/Morphoses/` folder contains the [Morphoses Engine](#3-morphoses-engine), and a [Stream Ingestor](#4-stream-ingestor) module. The application codes (e.g., PageRank, SSSP, etc.) for Morphoses engine can be found in the `apps/` directory. Useful helper files for generating the stream of changes (`tools/generators/streamGenerator.C`), creating the graph inputs in the correct format (`tools/converters/SNAPtoAdjConverter.C` - from Ligra's codebase) are provided.
 
 ### 2.2 Requirements
 - g++ >= 5.3.0 with support for Cilk Plus.
@@ -124,7 +124,7 @@ $   ./streamGenerator -edgeOperationsFile ../inputs/sample_edge_operations.txt -
 ```
 More details regarding the ingestor can be found in [Section 4](#4-stream-ingestor).
 
-## 3. GraphBolt Engine
+## 3. Morphoses Engine
 
 The GraphBolt engine provides Bulk Synchronous Parallel (BSP) guarantees while incrementally processing streaming graphs.
 
@@ -197,7 +197,7 @@ In addition to these functions, the algorithm also needs to define an `Info` cla
 
 ## 4. Stream Ingestor
 
-The stream ingestor FIFO is specified by `-streamPath`. Edge operations can be written to this FIFO. `-nEdges` specifies the maximum number of edge operations that can be passed to the GraphBolt engine in a single batch. The GraphBolt engine will continue to receive batches of edges from the stream ingestor until either the stream is closed (when there are no more writers to the FIFO) or when `-numberOfBatches` has been exceeded. If the writing end of the FIFO is not opened, the GraphBolt engine (which is the reading end) will block and wait until it is opened. 
+The stream ingestor FIFO is specified by `-streamPath`. Edge operations can be written to this FIFO. `-nEdges` specifies the maximum number of edge operations that can be passed to the Morphoses engine in a single batch. The Morphoses engine will continue to receive batches of edges from the stream ingestor until either the stream is closed (when there are no more writers to the FIFO) or when `-numberOfBatches` has been exceeded. If the writing end of the FIFO is not opened, the Morphoses engine (which is the reading end) will block and wait until it is opened. 
 
 There are a few optional flags that can affect the behaviour and determine the validity of the edge operations  passed to the command line parameter `-streamPath`:
 
@@ -208,6 +208,10 @@ There are a few optional flags that can affect the behaviour and determine the v
 
 
 ## 5. Acknowledgements
-Some utility functions from [Ligra](https://github.com/jshun/ligra) and [Problem Based Benchmark Suite](http://www.cs.cmu.edu/~pbbs/index.html) are used as part of this project. We are thankful to them for releasing their source code.
+Some utility functions from [Ligra](https://github.com/jshun/ligra), [GraphBolt](https://github.com/pdclab/graphbolt) and [Problem Based Benchmark Suite](http://www.cs.cmu.edu/~pbbs/index.html) are used as part of this project. We are thankful to them for releasing their source code.
 
 
+## 6.Authors and Copyright
+Morphoses is developed in National Engineering Research Center for Big Data Technology and System, Cluster and Grid Computing Lab, Services Computing Technology and System Lab, School of Computer Science and Technology, Huazhong University of Science and Technology, Wuhan, China.
+
+Copyright (C) 2022, [STCS & CGCL](http://grid.hust.edu.cn/) and [Huazhong University of Science and Technology](https://www.hust.edu.cn/).
