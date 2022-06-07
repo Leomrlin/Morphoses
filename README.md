@@ -2,7 +2,7 @@
 # Morphoses: A General Graph Stream Fine-grained Tracking System at Scale
 
 
-## 1. What is it?
+## 1. Introduction
 
 GraphBolt is an efficient streaming graph processing system that provides quickly reactions to graph changes, and provides low latency & high throughput processing. [[Read more]](https://www.cs.sfu.ca/~keval/contents/papers/graphbolt-eurosys19.pdf)
 
@@ -51,7 +51,7 @@ Other additional parameters may be required depending on the algorithm. Refer to
 
 ### 2.4 Graph Input and Stream Input Format
 
-For weighted graphs, the input graph should be in the weighted adjacency graph format. It is similar to [adjacency graph format](http://www.cs.cmu.edu/~pbbs/benchmarks/graphIO.html) but with the edge weights following the edges.
+Morphoses uses weighted graphs, and the input graph should be in the weighted adjacency graph format. It is similar to [adjacency graph format](http://www.cs.cmu.edu/~pbbs/benchmarks/graphIO.html) but with the edge weights following the edges.
 
 For example, a sample graph in SNAP format (weighted edgelist) and weighted adjacency graph format is shown below.
 
@@ -73,7 +73,7 @@ WeightedAdjacencyGraph
 10
 100
 ```
-You can use `tools/converter/SNAPtoAdjConverter.C` to convert the weighted edgelist to the weighted adjacency graph format as follows:
+You can use `tools/converter/SNAPtoAdjConverter.C -w` to convert the weighted edgelist to the weighted adjacency graph format as follows:
 ```bash
 $   ./SNAPtoAdjConverter -w inputGraphWeighted.snap inputGraphWeighted.adj
 $   # for undirected (symmetric) graphs, use the -s flag
@@ -88,13 +88,10 @@ d   0   1   10
 a   1   2   20
 ```
 
-To use a weighted graph, compile the program with `WEIGHTED=1` as shown below:
-```bash
-$   make WEIGHTED=1 SSSP
-$   ./SSSP -source 0 -numberOfUpdateBatches 1 -nEdges 1000 -streamPath ../inputs/sample_edge_operations.pipe -outputFile /tmp/output/sssp_output ../inputs/sample_graph.adj.weighted
-```
+Morphoses always compiles the program in weighted mode, if applications need to use unweighted graphs, set all edge weights to invalid values, and avoid involving the weight value in application codes.
 
-The edge weight datatype should be defined similar to `apps/SSSP_edgeData.h` by extending the `EdgeDataType` struct defined under `core/graph/edgeDataType.h`. The following functions determine how the edge weight from the input files are transformed and used by the system:
+
+The edge weight datatype should be defined similar to `apps/SSSP_edgeData.h` by extending the `EdgeDataType` struct defined under `core/graph/edgeDataType.h`. The following functions and variable determine how the edge weight from the input files are transformed and used by the system:
 - `createEdgeData(const char *edgeDataString)` - creates the edge data from the character string provided in graph input or streaming input. For example in SSSP, the string "10" is converted to the integer 10 and stored as edge weight. 
 - `setEdgeDataFromPtr(EdgeDataType *edgeData)` - performs a deep copy of the passed edge data.
 - `del()` - to deallocate any allocated memory.
@@ -116,43 +113,6 @@ $   ./SNAPtoAdjConverter -s -w inputGraphWeighted.snap inputGraphWeightedUndirec
 
 The weighted adjacency graph can then be used in user programs by defining the corresponding `EdgeDataType` struct as discussed above. In the `createEdgeData(const char *edgeDataString)` function, the string can be parsed into the respective datatypes `{long, double, double}` for `{edge_id, distance, max_speed}`.
 
-The initial input graph should be in the [adjacency graph format](http://www.cs.cmu.edu/~pbbs/benchmarks/graphIO.html). 
-For example, the SNAP format (edgelist) and the adjacency graph format for a sample graph are shown below.
-
-SNAP format:
-```txt
-0 1
-0 2
-2 0
-2 1
-```
- Adjacency Graph format:
-```txt
-AdjacencyGraph
-3
-4
-0
-2
-2
-1
-2
-0
-1
-```
-You can use `tools/converters/SNAPtoAdjConverter` to convert an input graph in Edgelist format (SNAP format) to the adjacency graph format, as follows:
-```bash
-$   ./SNAPtoAdjConverter inputGraph.snap inputGraph.adj
-$   # for undirected (symmetric) graphs, use the -s flag
-$   ./SNAPtoAdjConverter -s inputGraph.snap inputGraphUndirected.adj 
-```
-The streaming input file should have the edge operation (addition/deletion) on a separate line. The edge operation should be of the format, `[d/a] source destination` where `d` indicates edge deletion and `a` indicates edge addition. Example streaming input file:
-```bash
-a 1 2
-d 2 3
-a 4 5
-...
-```
-
 Edge operations can be streamed through a pipe using `tools/generators/streamGenerator.C`. It takes in the following command-line parameters:
 - `-edgeOperationsFile` : Input file containing the edge operations in the format mentioned above.
 - `-outputPipe` : Path of the output pipe where the edges are streamed to.
@@ -162,8 +122,7 @@ $   cd tools/generators
 $   make streamGenerator
 $   ./streamGenerator -edgeOperationsFile ../inputs/sample_edge_operations.txt -outputPipe ../inputs/sample_edge_operations.pipe
 ```
-More details regarding the ingestor can be found in [Section 5](#5-stream-ingestor).
-Information regarding weighted graphs can be found in [Section 6](#6-Weighted-Graphs).
+More details regarding the ingestor can be found in [Section 4](#4-stream-ingestor).
 
 ## 3. GraphBolt Engine
 
