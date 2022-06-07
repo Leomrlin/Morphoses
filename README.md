@@ -126,21 +126,19 @@ More details regarding the ingestor can be found in [Section 4](#4-stream-ingest
 
 ## 3. Morphoses Engine
 
-The GraphBolt engine provides Bulk Synchronous Parallel (BSP) guarantees while incrementally processing streaming graphs.
+The Morphoses engine is general for different iterative graph algorithms and uses several common convenient APIs.
 
-### 3.1 Creating Applications using the GraphBolt Engine
+### 3.1 Creating Applications using the Morphoses Engine
 
-A key design decision of the GraphBolt framework is to ensure that the application code remains oblivious to GraphBolt's internal subtleties while still providing fast performance.
+Morphoses framework ensures that the application code remains oblivious to Morphoses's internal subtleties while still providing fast performance.
 
-So, the application code only needs to express its computation using the following functions. More details regarding these functions can be found in the inline comments of `GraphBoltEngine.h`.
+So, the application code only needs to express its computation using the following functions. More details regarding these functions can be found in the inline comments of `MorphosesEngine.h`.
 
 #### AggregateValue and VertexValue initialization:
 - initializeAggregationValue()
 - initializeVertexValue()
-- aggregationValueIdentity()
-- vertexValueIdentity()
 
-GraphBolt stores information for each vertex in the form of aggregation values. So, first, the user should identify the aggregation value and the vertex value for the algorithm. For example in PageRank, the vertex value is its pagerank (`PR`) and the aggregation value is the sum of `(PR[u]/out_Degree[u])` values from all its inNeighbors. 
+Morphoses stores information for each vertex in the form of aggregation values and will be use in different version of the graph. For example in PageRank, the vertex value is its pagerank (`PR`), its out degrees(`outDegree`) and the aggregation value is the sum of `(PR[u]/out_Degree[u])` values from all its inNeighbors. 
 
 #### Activate vertex / Compute vertex for a given iteration:
 - forceActivateVertexForIteration()
@@ -158,35 +156,35 @@ In iterative graph algorithms, at a given iteration `i`, a set of vertices will 
 These are the functions used to add a value to or remove some value from the aggregation value. For sum, it is simply adding and subtracting the values from the aggregation value passed. Note that `addToAggregationAtomic()` and `removeFromAggregationAtomic()` will be called by multiple threads on the same aggregation value. So, the update should be performed atomically using CAS.
 
 #### Edge functions:
-- sourceChangeInContribution()
 - edgeFunction()
-- edgeFunctionDelta()
+- incrementalAggregationValue()
 
-The edge operation is split into 3 phases:
-1. Determine the source contribution - The computations for a given vertex which are dependent only on the source values are performed here. For example, in PageRank, a vertex `u` adds the value `PR[u]/out_degree[u]` to the aggregation value of all its outNeighbors. Since this computation of `PR[u]/out_degree[u]` is common for processing all the outEdges of `u`, we can compute this value (contribution of the source vertex) only once and perform the addition for all outEdges.
-2. Transform the contribution depending on the edge data - In this step, the source vertex contribution is transformed by the edge property. For example in weighted page rank, the contribution will be multiplied by the edge weight.
-3. Aggregating the contribution to the aggregation value using `addToAggregationAtomic()`.
+The trivial edge operation `edgeFunction()` starts from the vertex value and ends by modifying the aggregate value of the destination vertex through an edge.
 
-Note that these functions do not require CAS or locks. In the case of complex aggregations, an additional `edgeFunctionDelta()` has to be defined. Refer the `apps/GraphBoltEngine.h`, `apps/GraphBoltEngine_complex.h` for further details of these functions.
+The incremental edge operation is split into 3 phases:
+1. Revoke the old source contribution - For example, in PageRank, a vertex `u` adds the value `PR[u]/out_degree[u]` to the aggregation value of all its outNeighbors. Subtracting this value from the aggregated value of v will revoke the contribution of old `u`.
+2. Transform the new contribution depending on the edge data - In this step, the source vertex contribution is transformed by the edge property. For example in weighted page rank, the contribution will be multiplied by the edge weight.
+3. Aggregating the contribution to the aggregation value.
 
 #### Vertex compute function and determine end of computation:
 - computeFunction()
-- notDelZero()
+- isVertexValueEqual()
 
 Given an aggregation value, `computeFunction()` computes the vertex value corresponding to this aggregation value.
-In order to detemine the convergence condition, the `notDelZero()` is used to determine whether the value of vertex has significantly changed compared to its previous value. 
-Both these functions do not require CAS or locks as they will be invoked in a vertex parallel manner.
+To replay the computation history, `computeFunction()` is not called when the vertex value has not significantly changed.
+In order to detemine the convergence condition, the `isVertexValueEqual()` is used to determine whether the value of vertex has significantly changed compared to its previous value. 
+Both these functions do not require CAS or locks.
 
 #### Determine how an edge update affects the source / destination:
-- hasSourceChangedByUpdate()
-- hasDestinationChangedByUpdate()
+- useIncrementalVertexValueRecompute()
+- theSameVertexVlaueTheSameMessage()
 
-These functions are used to define how an edge update affects the source and destination vertex, i.e., whether the vertex should be activated or its value recomputed (using `computeFuntion()`) in the first iteration. For example, in PageRank, if the out_degree of a vertex changes, then it will be active in the first iteration. While in COEM, if the sum of inWeights of a vertex changes, then its value should be computed in the first iteration.
+These functions tell Morphoses some characteristics of the iterative graph algorithm for more optimized performation. `useIncrementalVertexValueRecompute()` returning true means that Morphoses can use the incremental function `incrementalAggregationValue()` to recompute aggregation values. And `theSameVertexVlaueTheSameMessage()` returning true means that Morphoses can confirm same messages derived from same vertex values, thus avoiding unnecessary retransmissions(must be done in some algorithms such as `PR`).
 
 #### Compute function
 - compute()
 
-This is the starting point of the application. The GraphBolt engine is initialized here with the required configurations and started.
+This is the starting point of the application. The Morphoses engine is initialized here with the required configurations and started.
 
 In addition to these functions, the algorithm also needs to define an `Info` class which contains all the global variable/constants required for that application. It should implement the following functions:
 - copy()
