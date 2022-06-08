@@ -140,13 +140,6 @@ So, the application code only needs to express its computation using the followi
 
 Morphoses stores information for each vertex in the form of aggregation values and will be use in different version of the graph. For example in PageRank, the vertex value is its pagerank (`PR`), its out degrees(`outDegree`) and the aggregation value is the sum of `(PR[u]/out_Degree[u])` values from all its inNeighbors. 
 
-#### Activate vertex / Compute vertex for a given iteration:
-- forceActivateVertexForIteration()
-- forceComputeVertexForIteration()
-- shouldUseDelta()
-
-In iterative graph algorithms, at a given iteration `i`, a set of vertices will push some value to their outNeighbors. These are the active vertices for that iteration. The outNeighbors which receive these values will then compute their updated values. The following functions are provided to force a vertex to be either active/compute at a given iteration. For example, in Label Propagation, all the vertices should compute their values at each iteration irrespective of whether they receive any new changes from their inNeighbors at that iteration (refer `apps/LabelPropagation.C`).
-
 #### Add to or remove from aggregation:
 - addToAggregation()
 - addToAggregationAtomic()
