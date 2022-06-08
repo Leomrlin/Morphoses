@@ -4,7 +4,7 @@
 
 ## 1. Introduction
 
-GraphBolt is an efficient streaming graph processing system that provides quickly reactions to graph changes, and provides low latency & high throughput processing. [[Read more]](https://www.cs.sfu.ca/~keval/contents/papers/graphbolt-eurosys19.pdf)
+Morphoses is an efficient graph stream real-time tracking system. She provides quickly reactions to the real-time graph changes of the impact upon different iterative graph algorithms, and provides fine-grained tracking security.
 
 ##  2. Getting Started
 
