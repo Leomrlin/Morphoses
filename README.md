@@ -140,14 +140,6 @@ So, the application code only needs to express its computation using the followi
 
 Morphoses stores information for each vertex in the form of aggregation values and will be use in different version of the graph. For example in PageRank, the vertex value is its pagerank (`PR`), its out degrees(`outDegree`) and the aggregation value is the sum of `(PR[u]/out_Degree[u])` values from all its inNeighbors. 
 
-#### Add to or remove from aggregation:
-- addToAggregation()
-- addToAggregationAtomic()
-- removeFromAggregation()
-- removeFromAggregationAtomic()
-
-These are the functions used to add a value to or remove some value from the aggregation value. For sum, it is simply adding and subtracting the values from the aggregation value passed. Note that `addToAggregationAtomic()` and `removeFromAggregationAtomic()` will be called by multiple threads on the same aggregation value. So, the update should be performed atomically using CAS.
-
 #### Edge functions:
 - edgeFunction()
 - incrementalAggregationValue()
